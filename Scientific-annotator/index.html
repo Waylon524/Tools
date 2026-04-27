@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图注编辑器</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>◈</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script>
+        if (typeof fabric === 'undefined') {
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,system-ui,sans-serif;color:#c64545;text-align:center;padding:40px;background:#faf9f5;"><div><h2 style="margin-bottom:16px;font-family:Georgia,serif;">Fabric.js 加载失败</h2><p style="color:#3d3d3a;">请检查网络连接后刷新页面</p><p style="color:#6c6a64;font-size:13px;margin-top:8px;">需要从 CDN 加载 Fabric.js 库</p></div></div>';
+            });
+        }
+    </script>
+</head>
+<body>
+    <!-- Grain overlay -->
+    <div class="grain"></div>
+
+    <!-- Top Toolbar -->
+    <header id="toolbar">
+        <div class="toolbar-brand">
+            <span class="brand-mark">◈</span>
+            <span class="brand-text">图注编辑器</span>
+        </div>
+        <div class="toolbar-group">
+            <button id="btn-upload" class="toolbar-btn" title="上传图像">
+                <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v10M3 6l5-5 5 5M1 13h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+                <span>上传</span>
+            </button>
+            <input type="file" id="file-input" accept="image/*" hidden>
+            <span class="toolbar-sep"></span>
+            <button id="btn-undo" class="toolbar-btn" title="撤销 Ctrl+Z">
+                <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6L1 3l3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter"/><path d="M1 3h8a5 5 0 010 10H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+            </button>
+            <button id="btn-redo" class="toolbar-btn" title="重做 Ctrl+Y">
+                <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 6l3-3-3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter"/><path d="M15 3H7a5 5 0 000 10h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+            </button>
+            <span class="toolbar-sep"></span>
+            <button id="btn-snap" class="toolbar-btn toolbar-btn--snap" title="吸附对齐">
+                <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="6" height="6" stroke="currentColor" stroke-width="1.2"/><line x1="7" y1="4" x2="9" y2="4" stroke="currentColor" stroke-width="1" stroke-dasharray="2 1"/><line x1="13" y1="7" x2="13" y2="9" stroke="currentColor" stroke-width="1" stroke-dasharray="2 1"/></svg>
+                <span>吸附</span>
+            </button>
+            <span class="toolbar-sep"></span>
+            <button id="btn-export" class="toolbar-btn toolbar-btn--primary" title="导出图像">
+                <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 10v3h12v-3M8 2v8M4 6l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+                <span>导出</span>
+            </button>
+        </div>
+        <div class="toolbar-info">
+            <span id="canvas-info" class="info-text">未加载图像</span>
+            <span class="info-dot"></span>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div id="main-container">
+        <!-- Left Tool Panel -->
+        <aside id="left-panel">
+            <nav class="tool-nav">
+                <button class="tool-btn active" data-tool="select">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="16" height="16" rx="1" stroke="currentColor" stroke-width="1.5"/><circle cx="10" cy="10" r="2" fill="currentColor"/></svg>
+                    <span class="tool-label">选择</span>
+                </button>
+                <button class="tool-btn" data-tool="crop">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 3v10h10M3 5h10v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+                    <span class="tool-label">裁剪</span>
+                </button>
+                <span class="tool-divider"></span>
+                <button class="tool-btn" data-tool="text">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4h12M10 4v13M6 17h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+                    <span class="tool-label">文字</span>
+                </button>
+                <span class="tool-divider"></span>
+                <button class="tool-btn shape-group" data-tool="brace">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M14 3h-3L3 8v4l8 5h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter"/></svg>
+                    <span class="tool-label">花括号</span>
+                </button>
+                <button class="tool-btn shape-group" data-tool="ellipse">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><ellipse cx="10" cy="10" rx="9" ry="6" stroke="currentColor" stroke-width="1.5"/></svg>
+                    <span class="tool-label">椭圆</span>
+                </button>
+                <button class="tool-btn shape-group" data-tool="rect">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="4" width="16" height="12" stroke="currentColor" stroke-width="1.5"/></svg>
+                    <span class="tool-label">矩形</span>
+                </button>
+                <span class="tool-divider"></span>
+                <button class="tool-btn shape-group" data-tool="line">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg>
+                    <span class="tool-label">直线</span>
+                </button>
+                <button class="tool-btn shape-group" data-tool="arrow">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><line x1="3" y1="17" x2="15" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/><polyline points="10,10 15,5 9,2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square"/></svg>
+                    <span class="tool-label">箭头</span>
+                </button>
+            </nav>
+
+            <div class="panel-divider"></div>
+
+            <div class="panel-section" id="adjust-section">
+                <button class="section-header collapsible" data-target="adjust-controls">
+                    <span class="section-icon">◈</span>
+                    <span>图像调整</span>
+                    <svg class="collapse-caret" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square"/></svg>
+                </button>
+                <div id="adjust-controls" class="collapsible-content">
+                    <div class="slider-group">
+                        <div class="slider-label"><span>亮度</span><span id="val-brightness" class="slider-val">0</span></div>
+                        <input type="range" id="slider-brightness" min="-100" max="100" value="0" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>曝光</span><span id="val-exposure" class="slider-val">0</span></div>
+                        <input type="range" id="slider-exposure" min="-100" max="100" value="0" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>对比度</span><span id="val-contrast" class="slider-val">0</span></div>
+                        <input type="range" id="slider-contrast" min="-100" max="100" value="0" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>高光</span><span id="val-highlights" class="slider-val">0</span></div>
+                        <input type="range" id="slider-highlights" min="-100" max="100" value="0" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>阴影</span><span id="val-shadows" class="slider-val">0</span></div>
+                        <input type="range" id="slider-shadows" min="-100" max="100" value="0" step="1">
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>旋转</span><span id="val-rotation" class="slider-val">0°</span></div>
+                        <input type="range" id="slider-rotation" min="-180" max="180" value="0" step="1">
+                    </div>
+                    <button id="btn-reset-adjust" class="panel-btn panel-btn--ghost">重置全部</button>
+                </div>
+            </div>
+
+            <div class="panel-divider"></div>
+
+            <div class="panel-section" id="border-section">
+                <button class="section-header collapsible" data-target="border-controls">
+                    <span class="section-icon">◈</span>
+                    <span>边框</span>
+                    <svg class="collapse-caret" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="square"/></svg>
+                </button>
+                <div id="border-controls" class="collapsible-content">
+                    <div class="border-grid">
+                        <div class="slider-group">
+                            <div class="slider-label"><span>上</span><span id="val-border-top" class="slider-val">0px</span></div>
+                            <input type="number" id="slider-border-top" min="0" max="500" value="0" step="1">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-label"><span>右</span><span id="val-border-right" class="slider-val">0px</span></div>
+                            <input type="number" id="slider-border-right" min="0" max="500" value="0" step="1">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-label"><span>下</span><span id="val-border-bottom" class="slider-val">0px</span></div>
+                            <input type="number" id="slider-border-bottom" min="0" max="500" value="0" step="1">
+                        </div>
+                        <div class="slider-group">
+                            <div class="slider-label"><span>左</span><span id="val-border-left" class="slider-val">0px</span></div>
+                            <input type="number" id="slider-border-left" min="0" max="500" value="0" step="1">
+                        </div>
+                    </div>
+                    <div class="slider-group">
+                        <div class="slider-label"><span>颜色</span></div>
+                        <input type="color" id="border-color" value="#ffffff">
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas Area -->
+        <main id="canvas-container">
+            <div class="canvas-grid"></div>
+            <div id="canvas-drop-zone">
+                <div id="drop-message">
+                    <svg class="drop-glyph" width="64" height="64" viewBox="0 0 64 64" fill="none">
+                        <rect x="8" y="8" width="48" height="48" rx="2" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"/>
+                        <path d="M24 44V28l-6 6M40 44V28l6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+                        <circle cx="32" cy="22" r="5" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                    <p class="drop-title">拖放图像到此处</p>
+                    <p class="drop-sub">或点击上传按钮选择文件</p>
+                </div>
+                <canvas id="main-canvas"></canvas>
+            </div>
+            <div id="zoom-control" class="zoom-control" style="display:none;">
+                <button id="btn-zoom-out" class="zoom-btn">−</button>
+                <span id="zoom-level" class="zoom-level">100%</span>
+                <button id="btn-zoom-in" class="zoom-btn">+</button>
+            </div>
+        </main>
+
+        <!-- Right Properties Panel -->
+        <aside id="right-panel">
+            <div class="panel-section" id="properties-section">
+                <div class="section-header section-header--static">
+                    <span class="section-icon">◈</span>
+                    <span>属性</span>
+                </div>
+                <div id="properties-content">
+                    <p class="placeholder-text">选择一个对象<br>以编辑其属性</p>
+                </div>
+            </div>
+
+            <!-- Text Properties -->
+            <div class="panel-section" id="text-props" style="display:none;">
+                <div class="section-header section-header--static">
+                    <span class="section-icon">T</span>
+                    <span>文字属性</span>
+                </div>
+                <div class="prop-group">
+                    <div class="prop-label">字体</div>
+                    <select id="prop-font-family">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Helvetica">Helvetica</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="SimSun">宋体</option>
+                        <option value="SimHei">黑体</option>
+                        <option value="KaiTi">楷体</option>
+                    </select>
+                </div>
+                <div class="prop-group">
+                    <div class="prop-label"><span>字号</span></div>
+                    <input type="number" id="prop-font-size" min="8" max="500" value="24" step="1">
+                </div>
+                <div class="prop-group prop-row">
+                    <button class="style-btn" id="btn-bold">B</button>
+                    <button class="style-btn" id="btn-italic">I</button>
+                    <button class="style-btn" id="btn-underline">U</button>
+                    <button class="style-btn" id="btn-superscript">X²</button>
+                    <button class="style-btn" id="btn-subscript">X₂</button>
+                </div>
+                <div class="prop-group">
+                    <div class="prop-label">颜色</div>
+                    <input type="color" id="prop-text-color" value="#000000">
+                </div>
+                <div class="prop-group">
+                    <div class="prop-label">文本内容</div>
+                    <textarea id="prop-text-content" rows="3" placeholder="选择文字以编辑内容…"></textarea>
+                </div>
+            </div>
+
+            <!-- Shape Properties -->
+            <div class="panel-section" id="shape-props" style="display:none;">
+                <div class="section-header section-header--static">
+                    <span class="section-icon">◈</span>
+                    <span>形状属性</span>
+                </div>
+                <div class="prop-group" id="stroke-color-group">
+                    <div class="prop-label">描边颜色</div>
+                    <input type="color" id="prop-stroke-color" value="#ff0000">
+                </div>
+                <div class="prop-group" id="stroke-width-group">
+                    <div class="prop-label"><span>描边宽度</span><span id="val-stroke-width" class="slider-val">2</span></div>
+                    <input type="range" id="prop-stroke-width" min="1" max="20" value="2" step="1">
+                </div>
+
+                <div class="prop-group prop-row">
+                    <label class="fill-toggle">
+                        <input type="checkbox" id="prop-has-fill">
+                        <span class="checkmark"></span>
+                        <span>填充</span>
+                    </label>
+                    <input type="color" id="prop-fill-color" value="#ff0000" disabled>
+                </div>
+                <div class="prop-group">
+                    <div class="prop-label"><span>X</span><span id="val-pos-x" class="slider-val">0</span></div>
+                    <input type="range" id="prop-pos-x" min="0" max="2000" value="0" step="1">
+                </div>
+                <div class="prop-group">
+                    <div class="prop-label"><span>Y</span><span id="val-pos-y" class="slider-val">0</span></div>
+                    <input type="range" id="prop-pos-y" min="0" max="2000" value="0" step="1">
+                </div>
+            </div>
+
+            <div class="panel-section" id="delete-section" style="display:none;">
+                <button id="btn-delete" class="panel-btn panel-btn--danger">
+                    <svg width="14" height="14" viewBox="0 0 14 14"><path d="M3 4h8M5 4V3h4v1M11 4v7a1 1 0 01-1 1H4a1 1 0 01-1-1V4" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="square"/></svg>
+                    删除选中对象
+                </button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Export Dialog -->
+    <div id="export-dialog" class="dialog-overlay" style="display:none;">
+        <div class="dialog-backdrop"></div>
+        <div class="dialog-box">
+            <div class="dialog-header">
+                <span class="section-icon">◈</span>
+                <span>导出图像</span>
+            </div>
+            <div class="dialog-content">
+                <div class="prop-group">
+                    <div class="prop-label"><span>分辨率倍率</span><span id="val-scale" class="slider-val">2×</span></div>
+                    <input type="range" id="export-scale" min="1" max="4" value="2" step="1">
+                    <div class="scale-marks"><span>1×</span><span>2×</span><span>3×</span><span>4×</span></div>
+                </div>
+                <div class="prop-group">
+                    <div class="prop-label">格式</div>
+                    <select id="export-format">
+                        <option value="png">PNG — 无损</option>
+                        <option value="jpeg">JPEG — 压缩</option>
+                    </select>
+                </div>
+                <div class="prop-group" id="jpeg-quality-group" style="display:none;">
+                    <div class="prop-label"><span>质量</span><span id="val-quality" class="slider-val">90%</span></div>
+                    <input type="range" id="export-quality" min="10" max="100" value="90" step="1">
+                </div>
+                <div class="export-preview">
+                    <div class="prop-label">输出尺寸</div>
+                    <span id="export-dimensions" class="export-dims">—</span>
+                </div>
+            </div>
+            <div class="dialog-buttons">
+                <button id="btn-export-cancel" class="panel-btn panel-btn--ghost">取消</button>
+                <button id="btn-export-confirm" class="panel-btn panel-btn--primary">导出下载</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crop Controls -->
+    <div id="crop-controls" class="crop-overlay" style="display:none;">
+        <button id="btn-crop-cancel" class="panel-btn panel-btn--ghost">取消</button>
+        <button id="btn-crop-confirm" class="panel-btn panel-btn--primary">确认裁剪</button>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
