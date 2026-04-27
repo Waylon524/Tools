@@ -69,7 +69,7 @@
 ## 快速开始
 
 ```bash
-git clone https://github.com/your-username/scientific-annotator.git
+git clone https://github.com/Waylon524/Tools/scientific-annotator.git
 cd scientific-annotator
 python run.py
 ```
