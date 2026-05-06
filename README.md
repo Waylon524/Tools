@@ -1,88 +1,67 @@
-# 🧪 多行图像凝胶层析分析系统 
-**(Multi-row Image Gel Chromatography Analysis System)**
+# Biotech-Tool
 
-这是一个轻量级、纯前端（浏览器端）的凝胶层析数据分析与可视化工具。通过上传凝胶层析洗脱液（试管阵列）的照片，系统能够利用图像处理技术提取吸光度（基于相对光密度），自动绘制洗脱曲线，并智能计算诸如外水体积 ($V_0$)、内水体积 ($V_i$)、洗脱体积 ($V_e$) 及分配系数 ($K_{av}$) 等关键生化参数。
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
----
-
-## ✨ 核心特性
-
-- **📸 图像光度计分析**：无需昂贵的分光光度计，通过试管照片自动提取 RGB 或灰度通道的颜色深度，运用比尔-朗伯定律原理转化为相对光密度（OD）。
-- **📊 智能参数计算**：
-  - 支持设置 **柱床体积 ($V_t$)**、**单管体积** 和 **收集前弃去体积**。
-  - 自动寻峰计算各组分的 **洗脱体积 ($V_e$)**。
-  - 支持指定特定物质（如蓝色葡聚糖）作为 **外水体积 ($V_0$) 指示剂**。
-  - 自动推算 **内水体积 ($V_i$)** 和各组分的 **分配系数 ($K_{av}$)**。
-- **🎨 多通道与多物质**：支持分离不同颜色的混合物。例如：红色通道测蓝色葡聚糖，绿光通道测细胞色素C。
-- **🔧 灵活的图像矫正**：支持分行上传试管照片，通过直观的 X/Y 轴与比例控制，将采样红框精准对齐液面。
-- **📈 高清图表导出**：一键生成以洗脱体积为横坐标的归一化平滑洗脱曲线，支持导出为带有纯白背景的高清 PNG 图片，可直接用于实验报告。
-- **⚡ 零部署安装**：单一 HTML 文件，无后端依赖，双击即可在任何现代浏览器中离线运行。
+[English](#english) | [中文](#中文)
 
 ---
 
-## 🚀 快速开始
+## English
 
-### 安装与运行
-本程序不需要任何复杂的环境配置或服务器：
-1. 将代码保存为 `index.html`（或任意名称的 `.html` 文件）。
-2. 使用任何现代浏览器（推荐 Chrome, Edge, Safari）双击打开该文件即可使用。
+A collection of privacy-first, browser-native tools for biotechnology research. No installation, no server uploads — everything runs locally in your browser.
 
----
+### Tools
 
-## 📖 使用指南
+**1. Gel Chromatography Analysis System** — [gel-chromatography-analysis/](gel-chromatography-analysis/)
 
-### 第一步：全局参数配置
-在左侧面板顶部，填写您的实验基础数据：
-* **柱床体积 ($V_t$)**：凝胶柱的总体积（mL）。
-* **单管体积**：每支收集管所收集的液体体积（mL）。
-* **收集前弃去体积**：在开始收集第 1 管之前，已经流出并被倒掉的洗脱液体积（mL）。*这用于校准最终的真实洗脱体积。*
+Extract absorbance from tube-array photographs via image processing, automatically generate elution curves, and compute $V_0$, $V_i$, $V_e$, $K_{av}$. Double-click the HTML file to run offline in any browser.
 
-### 第二步：配置检测物质与 V0 指示剂
-1. 点击“+ 添加物质”，为您实验中的目标分子创建配置。
-2. 为不同颜色的物质选择最佳**吸收通道**：
-   * 🔵 蓝色物质（如蓝色葡聚糖） -> 选 **红光** 通道
-   * 🔴 红色物质（如细胞色素 C） -> 选 **绿光** 通道
-   * 🟡 黄色物质（如核黄素） -> 选 **蓝光** 通道
-   * ⚪ 无色或混合物 -> 选 **灰度** 通道
-3. **关键操作**：勾选某一种物质的 **“设为 V0”** 单选框，程序将以该物质的峰值位置作为外水体积。
+**2. Scientific Image Annotator** — [scientific-annotator/](scientific-annotator/)
 
-### 第三步：上传照片与对齐采样区
-1. 点击“添加新的一排照片”，上传裁剪好的试管阵列图片。
-2. 输入该张图片包含的**管数**。
-3. 调整 `Y 轴高度`、`X 起点` 和 `X 终点`，确保图片上的**红色采样框**正好套在每支试管液面的颜色最深处，且避开管壁的反光。
-4. 如果有几十管，可以继续添加“新的一排照片”并按顺序排列。
+Add text annotations, shape markers, scale bars, and borders to scientific images, then export at publication-ready resolution.
 
-### 第四步：生成曲线与导出结果
-1. 点击右上角的 **“生成合并曲线”** 按钮。
-2. 查看右侧面板：
-   * **图表区**：显示归一化后的洗脱曲线。鼠标悬停可查看具体数值。
-   * **结果区**：自动给出 $V_0, V_i$ 以及各组分的 $V_e$ 和 $K_{av}$ 计算结果。
-3. 点击图表上方的 **“下载结果图”** 即可保存图片放入您的实验报告。
+```bash
+cd scientific-annotator
+python run.py
+```
+
+### Tech Stack
+
+| Tool | Core Technologies |
+|------|-------------------|
+| Gel Chromatography Analysis | HTML5 Canvas + Chart.js + Tailwind CSS |
+| Scientific Image Annotator | HTML5 Canvas + Fabric.js 5 + ES Modules |
 
 ---
 
-## 🧮 核心参数与公式说明
+## 中文
 
-系统内置的自动计算逻辑基于以下层析理论：
+一套注重隐私、纯浏览器端运行的生物技术科研工具集。无需安装，无需上传至服务器——所有操作都在浏览器本地完成。
 
-* **洗脱体积 ($V_e$)**：$V_e$ = 收集前弃去体积 + 峰值所在管数 $\times$ 单管体积
-* **外水体积 ($V_0$)**：用户指定指示剂（如 Blue Dextran 2000）出峰时的洗脱体积。
-* **内水体积 ($V_i$)**：近似计算为 $V_i = V_t - V_0$ （未考虑凝胶基质骨架的极小体积）。
-* **分配系数 ($K_{av}$)**：$K_{av} = \frac{V_e - V_0}{V_t - V_0} = \frac{V_e - V_0}{V_i}$
+### 工具列表
 
-*(注：系统在内部自动获取了前几管作为空白对照 $I_0$，并通过公式 $A = -log_{10}(I/I_0)$ 计算吸光度，最后进行了平滑处理与归一化)*
+**1. 凝胶层析分析系统** — [gel-chromatography-analysis/](gel-chromatography-analysis/)
+
+通过上传试管阵列照片提取吸光度，自动绘制洗脱曲线，计算 $V_0$、$V_i$、$V_e$、$K_{av}$ 等关键生化参数。双击 HTML 文件即可在浏览器中离线使用。
+
+**2. 科研图像图注编辑器** — [scientific-annotator/](scientific-annotator/)
+
+为科研图像添加文字标注、形状标记、比例尺和边框，导出满足论文发表要求的高清图像。
+
+```bash
+cd scientific-annotator
+python run.py
+```
+
+### 技术栈
+
+| 工具 | 核心技术 |
+|------|----------|
+| 凝胶层析分析系统 | HTML5 Canvas + Chart.js + Tailwind CSS |
+| 图像图注编辑器 | HTML5 Canvas + Fabric.js 5 + ES Modules |
 
 ---
 
-## 🛠️ 技术栈
+## License · 许可证
 
-* **核心结构**：HTML5 + Vanilla JavaScript
-* **样式框架**：Tailwind CSS (通过 CDN 引入)
-* **图表渲染**：Chart.js (通过 CDN 引入)
-* **图像处理**：HTML5 `<canvas>` API (ImageData 像素级提取)
-
----
-
-## 📝 许可证与免责声明
-
-本项目仅供学习、教学演示与实验预处理参考。由于照片拍摄光线、相机白平衡和管壁折射的存在，本程序基于图像像素计算的光密度与专业分光光度计测得的绝对 OD 值可能存在差异，但其反映的**相对趋势与出峰位置（体积）**具有高度参考价值。
+[MIT](LICENSE)
